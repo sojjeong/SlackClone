@@ -1,6 +1,8 @@
 import React, { useCallback, useState } from 'react';
-import { Label, Form, Input, LinkContainer, Button, Header, Error } from './styles';
+import { Label, Form, Input, LinkContainer, Button, Header, Error, Success } from './styles';
+import axios from 'axios';
 import useInput from '@hooks/useInput';
+import { Link } from 'react-router-dom';
 
 const SignUp = () => {
   const [email, onChangeEmail] = useInput('');
@@ -10,6 +12,8 @@ const SignUp = () => {
   const [password, , setPassword] = useInput('');
   const [passwordCheck, , setPasswordCheck] = useInput('');
   const [mismatchError, setMismatchError] = useState(false);
+  const [signUpError, setSignUpError] = useState('');
+  const [signUpSuccess, setSignUpSuccess] = useState(false);
 
   // 커스텀 hook 사용으로 더 이상 필요 없음!
   // const onChangeEmail = useCallback((e) => {
@@ -43,8 +47,28 @@ const SignUp = () => {
       // useCallback으로 안감싸줘도 되지만, 리렌더링이 많이 일어남(사실 성능저하에 큰 영향을 미치는건 아니지만..)
       e.preventDefault();
 
-      if (!missmatchError) {
+      if (!mismatchError) {
         console.log('서버로 가입 정보 전송');
+
+        // 비동기 요청 처리 전 초기화 해주는게 좋음
+        setSignUpError('');
+        setSignUpSuccess(false);
+
+        axios
+          .post('http://localhost:3095/api/users', {
+            email,
+            nickname,
+            password,
+          })
+          .then((response) => {
+            console.log(response);
+            setSignUpSuccess(true);
+          })
+          .catch((error) => {
+            console.log(error.response); // 정확한 에러는 .response 에 담겨있음
+            setSignUpError(error.response.data);
+          })
+          .finally(() => {});
       }
     },
     [email, nickname, password, passwordCheck], // deps
@@ -79,14 +103,14 @@ const SignUp = () => {
           </div>
           {mismatchError && <Error>비밀번호가 일치하지 않습니다.</Error>}
           {!nickname && <Error>닉네임을 입력해주세요.</Error>}
-          {signUpError && <Error>이미 가입된 이메일입니다.</Error>}
+          {signUpError && <Error>{signUpError}</Error>}
           {signUpSuccess && <Success>회원가입되었습니다! 로그인해주세요.</Success>}
         </Label>
         <Button type="submit">회원가입</Button>
       </Form>
       <LinkContainer>
         이미 회원이신가요?&nbsp;
-        <a href="/login">로그인 하러가기</a>
+        <Link to="/login">로그인 하러가기</Link>
       </LinkContainer>
     </div>
   );
