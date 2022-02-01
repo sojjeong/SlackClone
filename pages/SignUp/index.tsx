@@ -1,10 +1,15 @@
 import React, { useCallback, useState } from 'react';
-import { Label, Form, Input, LinkContainer, Button, Header, Error, Success } from './styles';
+import { Link, Redirect } from 'react-router-dom';
+
 import axios from 'axios';
+import useSWR from 'swr';
+
 import useInput from '@hooks/useInput';
-import { Link } from 'react-router-dom';
+import fetcher from '@utils/fetcher';
+import { Label, Form, Input, LinkContainer, Button, Header, Error, Success } from './styles';
 
 const SignUp = () => {
+  const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher);
   const [email, onChangeEmail] = useInput('');
   const [nickname, onChangeNickname] = useInput('');
 
@@ -74,6 +79,14 @@ const SignUp = () => {
     [email, nickname, password, passwordCheck], // deps
   );
 
+  if (data === undefined) {
+    return <div>로딩중..</div>;
+  }
+
+  if (data) {
+    return <Redirect to="/workspace/sleact/channel/일반" />;
+  }
+
   return (
     <div id="container">
       <Header>Sleact</Header>
@@ -99,7 +112,13 @@ const SignUp = () => {
         <Label id="password-check-label">
           <span>비밀번호 확인</span>
           <div>
-            <Input type="password" id="password-check" name="password-check" value={passwordCheck} onChange={onChangePasswordCheck} />
+            <Input
+              type="password"
+              id="password-check"
+              name="password-check"
+              value={passwordCheck}
+              onChange={onChangePasswordCheck}
+            />
           </div>
           {mismatchError && <Error>비밀번호가 일치하지 않습니다.</Error>}
           {!nickname && <Error>닉네임을 입력해주세요.</Error>}

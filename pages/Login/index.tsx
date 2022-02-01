@@ -1,21 +1,22 @@
 import React, { useCallback, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Redirect } from 'react-router-dom';
 
 import axios from 'axios';
 import useSWR from 'swr';
 
 import useInput from '@hooks/useInput';
 import fetcher from '@utils/fetcher';
-import { Label, Form, Input, LinkContainer, Button, Header, Error, Success } from './styles';
+import { Label, Form, Input, LinkContainer, Button, Header, Error } from './styles';
 
 const Login = () => {
   // swr 의 좋은점 : 로딩중임을 알 수 있음. data 가 없으면 로딩중
   // fetcher가 리턴하는 데이터를 담아줌
   // dedupingInterval 옵션 사용: 주기적으로 호출은 하지만 deduping 기간 내에서는 캐시에서 불러옴
-  const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher, { dedupingInterval: 100000 });
+  const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher);
   const [logInError, setLogInError] = useState(false);
   const [email, onChangeEmail] = useInput('');
   const [password, onChangePassword] = useInput('');
+
   const onSubmit = useCallback(
     (e) => {
       e.preventDefault();
@@ -30,15 +31,21 @@ const Login = () => {
         )
         .then((response) => {
           // 성공하면 fetcher 실행
-          // swr은 자동으로 데이터를 가져오는데 언제 가져올지 정확히 모르니까 수동으로 다시 가져오려 한 것이 mutate()
+          // mutate(response.data, true); // optimistic ui
           mutate();
         })
         .catch((error) => {
           setLogInError(error.response?.data?.statusCode === 401);
         });
     },
-    [email, password],
+    [email, password, mutate],
   );
+
+  if (!error && data) {
+    // data 가 다 불러와지면 Redirect
+    console.log('login에서 호출하는 리다이렉트');
+    return <Redirect to="/workspace/sleact/channel/일반" />;
+  }
 
   return (
     <div id="container">
