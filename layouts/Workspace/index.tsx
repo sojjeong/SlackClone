@@ -12,14 +12,17 @@ import {
   Channels,
   Chats,
   Header,
+  LogOutButton,
   MenuScroll,
   ProfileImg,
+  ProfileModal,
   RightMenu,
   WorkspaceName,
   Workspaces,
   WorkspaceWrapper,
 } from '@layouts/Workspace/styles';
 import gravatar from 'gravatar';
+import Menu from '@components/Menu';
 
 // 컴포넌트 자체를 레이아웃으로 감싸던지, 레이아웃 안에서 어떤 컴포넌트를 쓸껀지 중첩 라우팅을 하던지
 // 여기서는 중첩 라우팅 사용
@@ -30,10 +33,15 @@ const DirectMessage = loadable(() => import('@pages/DirectMessage'));
 const Workspace: React.FC = ({ children }) => {
   const { data, error, mutate } = useSWR<IUser | false>('http://localhost:3095/api/users', fetcher);
   const [logout, setLogout] = useState('');
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const onLogout = useCallback(() => {
     axios.post('http://localhost:3095/api/users/logout', null, { withCredentials: true }).then(() => {
       mutate(false, false);
     });
+  }, []);
+
+  const onClickUserProfile = useCallback(() => {
+    setShowUserMenu((prev) => !prev);
   }, []);
 
   if (data === false) {
@@ -44,11 +52,22 @@ const Workspace: React.FC = ({ children }) => {
     <div>
       <Header>test</Header>
       <RightMenu>
-        <span>
+        <span onClick={onClickUserProfile}>
           <ProfileImg src={gravatar.url(data?.nickname as string, { s: '28px', d: 'retro' })} alt={data?.nickname} />
+          {showUserMenu && (
+            <Menu style={{ right: 0, top: 38 }} show={showUserMenu} onCloseModal={onClickUserProfile}>
+              <ProfileModal>
+                <img src={gravatar.url(data?.nickname as string, { s: '28px', d: 'retro' })} alt={data?.nickname} />
+                <div>
+                  <span id="profile-name">{data?.nickname}</span>
+                  <span id="profile-active">Active</span>
+                </div>
+              </ProfileModal>
+              <LogOutButton onClick={onLogout}>로그아웃</LogOutButton>
+            </Menu>
+          )}
         </span>
       </RightMenu>
-      <button onClick={onLogout}>로그아웃</button>
       <WorkspaceWrapper>
         <Workspaces>test</Workspaces>
         <Channels>
