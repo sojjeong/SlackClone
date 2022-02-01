@@ -5,6 +5,7 @@ import { Switch, Route, Redirect } from 'react-router';
 // code splitting
 const SignUp = loadable(() => import('@pages/SignUp'));
 const Login = loadable(() => import('@pages/Login'));
+const Workspace = loadable(() => import('@layouts/Workspace'));
 
 const App = () => {
   return (
@@ -12,6 +13,7 @@ const App = () => {
       <Redirect exact path="/" to="/login" />
       <Route exact path="/login" component={Login} />
       <Route exact path="/signup" component={SignUp} />
+      <Route exact path="/workspace/channel" component={Workspace} />
     </Switch>
   );
 };
