@@ -23,9 +23,9 @@ const CreateChannelModal: React.FC<Props> = ({ show, onCloseModal, setShowCreate
   const [newChannel, onChangeNewChannel, setNewChannel] = useInput('');
   const { workspace } = useParams<{ workspace: string; channel: string }>(); // 주소에 저장된 데이터를 이용
 
-  const { data: userData } = useSWR<IUser | false>('http://localhost:3095/api/users', fetcher);
+  const { data: userData } = useSWR<IUser | false>('/api/users', fetcher);
   const { mutate: mutateChannel } = useSWR<IChannel[]>(
-    userData ? `http://localhost:3095/api/workspaces/${workspace}/channels` : null,
+    userData ? `/api/workspaces/${workspace}/channels` : null,
     fetcher,
   );
 
@@ -39,7 +39,7 @@ const CreateChannelModal: React.FC<Props> = ({ show, onCloseModal, setShowCreate
 
       // 채널을 만들 때, 어떤 워크스페이스에 있는지 서버가 알아야 함
       axios
-        .post(`http://localhost:3095/api/workspaces/${workspace}/channels`, { name: newChannel })
+        .post(`/api/workspaces/${workspace}/channels`, { name: newChannel })
         .then(() => {
           mutateChannel();
           setShowCreateChannelModal(false);

@@ -90,11 +90,7 @@ const Workspace: React.VFC = () => {
       if (!newUrl || !newUrl.trim()) return;
 
       axios
-        .post(
-          'http://localhost:3095/api/workspaces',
-          { workspace: newWorkspace, url: newUrl },
-          { withCredentials: true },
-        )
+        .post('/api/workspaces', { workspace: newWorkspace, url: newUrl }, { withCredentials: true })
         .then(() => {
           mutate();
           setShowCreateWorkspaceModal(false);
