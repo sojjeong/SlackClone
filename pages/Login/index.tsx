@@ -16,6 +16,7 @@ const Login = () => {
   const [logInError, setLogInError] = useState(false);
   const [email, onChangeEmail] = useInput('');
   const [password, onChangePassword] = useInput('');
+
   const onSubmit = useCallback(
     (e) => {
       e.preventDefault();
@@ -30,22 +31,20 @@ const Login = () => {
         )
         .then((response) => {
           // 성공하면 fetcher 실행
-          mutate(response.data, false); // optimistic ui
-          // mutate();
+          // mutate(response.data, true); // optimistic ui
+          mutate();
         })
         .catch((error) => {
           setLogInError(error.response?.data?.statusCode === 401);
         });
     },
-    [email, password],
+    [email, password, mutate],
   );
 
-  console.log(`userData : ${data}`);
-
-  if (data) {
+  if (!error && data) {
     // data 가 다 불러와지면 Redirect
     console.log('login에서 호출하는 리다이렉트');
-    return <Redirect to="/workspace/channel" />;
+    return <Redirect to="/workspace/sleact/channel/일반" />;
   }
 
   return (

@@ -1,6 +1,6 @@
 import React from 'react';
 import loadable from '@loadable/component';
-import { Switch, Route, Redirect } from 'react-router';
+import { Switch, Route, Redirect } from 'react-router-dom';
 
 // code splitting
 const SignUp = loadable(() => import('@pages/SignUp'));
@@ -13,7 +13,7 @@ const App = () => {
       <Redirect exact path="/" to="/login" />
       <Route exact path="/login" component={Login} />
       <Route exact path="/signup" component={SignUp} />
-      <Route exact path="/workspace/channel" component={Workspace} />
+      <Route path="/workspace/:workspace" component={Workspace} />
     </Switch>
   );
 };

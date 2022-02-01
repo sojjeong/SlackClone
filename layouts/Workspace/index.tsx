@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { Redirect, Switch, Route } from 'react-router';
-import { Link } from 'react-router-dom';
+import { useParams } from 'react-router';
+import { Link, Redirect, Switch, Route } from 'react-router-dom';
 
 import useSWR from 'swr';
 import axios from 'axios';
@@ -8,8 +8,7 @@ import loadable from '@loadable/component';
 import { toast } from 'react-toastify';
 
 import fetcher from '@utils/fetcher';
-import { IUser } from '@typings/db';
-
+import { IChannel, IUser } from '@typings/db';
 import useInput from '@hooks/useInput';
 import Menu from '@components/Menu';
 import Modal from '@components/Modal';
@@ -41,14 +40,21 @@ const DirectMessage = loadable(() => import('@pages/DirectMessage'));
 
 // children을 사용하면 Channel 페이지에서 workspace안의 태그들이 children이 됨, 필요없으면 VFC로 타입 선언
 const Workspace: React.VFC = () => {
-  const { data: userData, error, mutate } = useSWR<IUser | false>('http://localhost:3095/api/users', fetcher);
-  const [logout, setLogout] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false);
   const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
   const [showCreateChannelModal, setShowCreateChannelModal] = useState(false);
-  const [newWorkspace, setNewWorkspace] = useInput('');
-  const [newUrl, setNewUrl] = useInput('');
+  const [newWorkspace, onChangeNewWorkspace, setNewWorkspace] = useInput('');
+  const [newUrl, onChangeNewUrl, setNewUrl] = useInput('');
+
+  const { workspace } = useParams<{ workspace?: string }>();
+
+  const { data: userData, error, mutate } = useSWR<IUser | false>('http://localhost:3095/api/users', fetcher);
+
+  const { data: channelData } = useSWR<IChannel[]>(
+    userData ? `http://localhost:3095/api/workspaces/${workspace}/channels` : null,
+    fetcher,
+  );
 
   const onLogout = useCallback(() => {
     axios.post('http://localhost:3095/api/users/logout', null, { withCredentials: true }).then(() => {
@@ -65,8 +71,8 @@ const Workspace: React.VFC = () => {
     setShowUserMenu(false);
   }, []);
 
-  const onClickWorkspace = useCallback(() => {
-    setShowCreateWorkspaceModal((prev) => !prev);
+  const onClickCreateWorkspace = useCallback(() => {
+    setShowCreateWorkspaceModal(true);
   }, []);
 
   const onCloseModal = useCallback(() => {
@@ -74,28 +80,32 @@ const Workspace: React.VFC = () => {
     setShowCreateChannelModal(false);
   }, []);
 
-  const onCreateWorkspace = useCallback((e) => {
-    e.preventDefault();
+  const onCreateWorkspace = useCallback(
+    (e) => {
+      e.preventDefault();
 
-    if (!newWorkspace || !newWorkspace.trim()) return;
-    if (!newUrl || !newUrl.trim()) return;
+      if (!newWorkspace || !newWorkspace.trim()) return;
+      if (!newUrl || !newUrl.trim()) return;
 
-    axios
-      .post('http://localhost:3095/api/workspaces', { workspace: newWorkspace, url: newUrl }, { withCredentials: true })
-      .then(() => {
-        mutate();
-        setNewWorkspace('');
-        setNewUrl('');
-      })
-      .catch((error) => {
-        console.dir(error);
-        toast.error(error.response?.data, { position: 'bottom-center' });
-      });
-  }, []);
-
-  const onChangeNewWorkspace = useCallback(() => {}, []);
-
-  const onChangeNewUrl = useCallback(() => {}, []);
+      axios
+        .post(
+          'http://localhost:3095/api/workspaces',
+          { workspace: newWorkspace, url: newUrl },
+          { withCredentials: true },
+        )
+        .then(() => {
+          mutate();
+          setShowCreateWorkspaceModal(false);
+          setNewWorkspace('');
+          setNewUrl('');
+        })
+        .catch((error) => {
+          console.dir(error);
+          toast.error(error.response?.data, { position: 'bottom-center' });
+        });
+    },
+    [newWorkspace, newUrl],
+  );
 
   const toggleWorkspaceModal = useCallback(() => {
     setShowWorkspaceModal((prev) => !prev);
@@ -145,7 +155,7 @@ const Workspace: React.VFC = () => {
               </Link>
             );
           })}
-          <AddButton onClick={onClickWorkspace}>+</AddButton>
+          <AddButton onClick={onClickCreateWorkspace}>+</AddButton>
         </Workspaces>
         <Channels>
           <WorkspaceName onClick={toggleWorkspaceModal}>Sleact</WorkspaceName>
@@ -157,24 +167,27 @@ const Workspace: React.VFC = () => {
                 <button onClick={onLogout}>로그아웃</button>
               </WorkspaceModal>
             </Menu>
+            {channelData?.map((v) => (
+              <div>{v.name}</div>
+            ))}
           </MenuScroll>
         </Channels>
         <Chats>
           <Switch>
-            <Route exact path="/workspace/channel" component={Channel} />
-            <Route exact path="/workspace/dm/" component={DirectMessage} />
+            <Route path="/workspace/:workspace/channel/:channel" component={Channel} />
+            <Route path="/workspace/:workspace/dm/:id" component={DirectMessage} />
           </Switch>
         </Chats>
       </WorkspaceWrapper>
       <Modal show={showCreateWorkspaceModal} onCloseModal={onCloseModal}>
         <form onSubmit={onCreateWorkspace}>
-          <Label id="workspace-lable">
+          <Label id="workspace-label">
             <span>워크스페이스 이름</span>
             <Input id="workspace" value={newWorkspace} onChange={onChangeNewWorkspace} />
           </Label>
-          <Label id="workspace-url-lable">
+          <Label id="workspace-url-label">
             <span>워크스페이스 url</span>
-            <Input id="workspace" value={newUrl} onChange={onChangeNewUrl} />
+            <Input id="workspace-url" value={newUrl} onChange={onChangeNewUrl} />
           </Label>
           <Button type="submit">생성하기</Button>
         </form>
@@ -183,7 +196,7 @@ const Workspace: React.VFC = () => {
         show={showCreateChannelModal}
         onCloseModal={onCloseModal}
         setShowCreateChannelModal={setShowCreateChannelModal}
-      ></CreateChannelModal>
+      />
     </div>
   );
 };
