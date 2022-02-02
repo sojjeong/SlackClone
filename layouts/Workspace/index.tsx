@@ -5,7 +5,7 @@ import { Link, Redirect, Switch, Route } from 'react-router-dom';
 import useSWR from 'swr';
 import axios from 'axios';
 import loadable from '@loadable/component';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 
 import fetcher from '@utils/fetcher';
 import { IChannel, IUser } from '@typings/db';
@@ -145,14 +145,14 @@ const Workspace: React.VFC = () => {
         <RightMenu>
           <span onClick={onClickUserProfile}>
             <ProfileImg
-              src={gravatar.url(userData?.nickname as string, { s: '28px', d: 'retro' })}
+              src={gravatar.url(userData?.email as string, { s: '28px', d: 'retro' })}
               alt={userData?.nickname}
             />
             {showUserMenu && (
               <Menu style={{ right: 0, top: 38 }} show={showUserMenu} onCloseModal={onCloseUserProfile}>
                 <ProfileModal>
                   <img
-                    src={gravatar.url(userData?.nickname as string, { s: '28px', d: 'retro' })}
+                    src={gravatar.url(userData?.email as string, { s: '28px', d: 'retro' })}
                     alt={userData?.nickname}
                   />
                   <div>
@@ -222,11 +222,7 @@ const Workspace: React.VFC = () => {
         onCloseModal={onCloseModal}
         setShowInviteWorkspaceModal={setShowInviteWorkspaceModal}
       />
-      <InviteChannelModal
-        show={showInviteChannelModal}
-        onCloseModal={onCloseModal}
-        setShowInviteChannelModal={setShowInviteChannelModal}
-      />
+      <ToastContainer position="bottom-center" />
     </div>
   );
 };

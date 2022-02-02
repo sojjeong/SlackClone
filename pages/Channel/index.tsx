@@ -9,8 +9,11 @@ import useSWRInfinite from 'swr/infinite';
 
 import ChatList from '@components/ChatList';
 import ChatBox from '@components/ChatBox';
+import InviteChannelModal from '@components/InviteChannelModal';
 import useInput from '@hooks/useInput';
+import useSocket from '@hooks/useSocket';
 import fetcher from '@utils/fetcher';
+import makeSection from '@utils/makeSection';
 import { IChannel, IChat, IUser } from '@typings/db';
 
 import Scrollbars from 'react-custom-scrollbars-2';
@@ -19,9 +22,12 @@ import { Container, Header } from './styles';
 const PAGE_SIZE = 20;
 const Channel = () => {
   const { workspace, channel } = useParams<{ workspace: string; channel: string }>();
-  const { data: userData } = useSWR<IUser>('/api/users', fetcher);
-  const { data: channelsData } = useSWR<IChannel[]>(`/api/workspaces/${workspace}/channels`, fetcher);
-  const channelData = channelsData?.find((v) => v.name === channel);
+  const { data: myData } = useSWR<IUser>('/api/users', fetcher);
+  const { data: channelData } = useSWR<IChannel>(`/api/workspaces/${workspace}/channels/${channel}`, fetcher);
+  const { data: channelMembersData } = useSWR<IUser[]>(
+    myData ? `/api/workspaces/${workspace}/channels/${channel}/members` : null,
+    fetcher,
+  );
 
   const {
     data: chatData,
@@ -41,25 +47,108 @@ const Channel = () => {
     },
   );
 
-  const { data: channelMembersData } = useSWR<IUser[]>(
-    userData ? `/api/workspaces/${workspace}/channels/${channel}/members` : null,
-    fetcher,
-  );
   const [chat, onChangeChat, setChat] = useInput('');
   const [showInviteChannelModal, setShowInviteChannelModal] = useState(false);
   const scrollbarRef = useRef<Scrollbars>(null);
   const [dragOver, setDragOver] = useState(false);
 
+  const [socket] = useSocket(workspace);
   const isEmpty = chatData?.[0]?.length === 0;
   const isReachingEnd = isEmpty || (chatData && chatData[chatData.length - 1]?.length < PAGE_SIZE);
+
+  const onSubmitForm = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (chat?.trim() && chatData && channelData && myData) {
+        const savedChat = chat;
+        mutateChat((prevChatData) => {
+          prevChatData?.[0].unshift({
+            id: (chatData[0][0]?.id || 0) + 1,
+            content: savedChat,
+            UserId: myData.id,
+            User: myData,
+            ChannelId: channelData.id,
+            Channel: channelData,
+            createdAt: new Date(),
+          });
+          return prevChatData;
+        }, false).then(() => {
+          setChat('');
+          scrollbarRef.current?.scrollToBottom();
+        });
+        axios
+          .post(`/api/workspaces/${workspace}/channels/${channel}/chats`, {
+            content: chat,
+          })
+          .catch(console.error);
+      }
+    },
+    [chat, workspace, myData, chatData, channelData, mutateChat, setChat],
+  );
+
+  const onMessage = useCallback(
+    (data: IChat) => {
+      // id는 상대방 아이디
+      if (data.Channel.name === channel && (data.content.startsWith('uploads\\') || data.UserId !== myData?.id)) {
+        mutateChat((chatData) => {
+          chatData?.[0].unshift(data);
+          return chatData;
+        }, false).then(() => {
+          if (scrollbarRef.current) {
+            if (
+              scrollbarRef.current.getScrollHeight() <
+              scrollbarRef.current.getClientHeight() + scrollbarRef.current.getScrollTop() + 150
+            ) {
+              console.log('scrollToBottom!', scrollbarRef.current?.getValues());
+              setTimeout(() => {
+                scrollbarRef.current?.scrollToBottom();
+              }, 50);
+            }
+          }
+        });
+      }
+    },
+    [channel, myData],
+  );
+
+  const onClickInviteChannel = useCallback(() => {
+    setShowInviteChannelModal(true);
+  }, []);
+
+  const onCloseModal = useCallback(() => {
+    setShowInviteChannelModal(false);
+  }, []);
+
+  useEffect(() => {
+    socket?.on('message', onMessage);
+    return () => {
+      socket?.off('message', onMessage);
+    };
+  }, [socket, onMessage]);
+
+  // 로딩 시 스크롤바 제일 아래로
+  useEffect(() => {
+    if (chatData?.length === 1) {
+      setTimeout(() => {
+        scrollbarRef.current?.scrollToBottom();
+      }, 100);
+    }
+  }, [chatData]);
+
+  if (!myData) {
+    return null;
+  }
+
+  // immutable 배열 reverse
+  const chatSections = makeSection(chatData ? chatData.flat().reverse() : []);
 
   return (
     <Container>
       <Header>
         <span>#{channel}</span>
-        <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
+        <div className="header-right">
           <span>{channelMembersData?.length}</span>
-          {/* <button
+          <button
             onClick={onClickInviteChannel}
             className="c-button-unstyled p-ia__view_header__button"
             aria-label="Add people to #react-native"
@@ -67,17 +156,28 @@ const Channel = () => {
             type="button"
           >
             <i className="c-icon p-ia__view_header__button_icon c-icon--add-user" aria-hidden="true" />
-          </button> */}
+          </button>
         </div>
       </Header>
-      {/* <ChatList /> */}
-      {/* <ChatBox
+      <ChatList
+        chatSections={chatSections}
+        setSize={setSize}
+        isEmpty={isEmpty}
+        isReachingEnd={isReachingEnd}
+        scrollbarRef={scrollbarRef}
+      />
+      <ChatBox
         onSubmitForm={onSubmitForm}
         chat={chat}
         onChangeChat={onChangeChat}
         data={[]}
-        placeholder={`Message ${userData?.nickname}`}
-      /> */}
+        placeholder={`Message ${myData.nickname}`}
+      />
+      <InviteChannelModal
+        show={showInviteChannelModal}
+        onCloseModal={onCloseModal}
+        setShowInviteChannelModal={setShowInviteChannelModal}
+      />
     </Container>
   );
 };
