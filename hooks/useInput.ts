@@ -1,7 +1,7 @@
-import { useCallback, useState, Dispatch, SetStateAction, UIEvent } from 'react';
+import { useCallback, useState, Dispatch, SetStateAction, UIEvent, ChangeEvent } from 'react';
 
 // return 타입을 변수로 설정
-type ReturnTypes<T = any> = [T, (e: any) => void, Dispatch<SetStateAction<T>>];
+type ReturnTypes<T = any> = [T, (e: ChangeEvent<HTMLInputElement>) => void, Dispatch<SetStateAction<T>>];
 
 // 커스텀 hook : 기존의 hook들을 하나로 합쳐서 새로운 hook을 만들어 내는 것
 const useInput = <T = any>(initialData: T): ReturnTypes<T> => {

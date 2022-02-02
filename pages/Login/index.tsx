@@ -12,7 +12,7 @@ const Login = () => {
   // swr 의 좋은점 : 로딩중임을 알 수 있음. data 가 없으면 로딩중
   // fetcher가 리턴하는 데이터를 담아줌
   // dedupingInterval 옵션 사용: 주기적으로 호출은 하지만 deduping 기간 내에서는 캐시에서 불러옴
-  const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher);
+  const { data, error, mutate } = useSWR('/api/users', fetcher);
   const [logInError, setLogInError] = useState(false);
   const [email, onChangeEmail] = useInput('');
   const [password, onChangePassword] = useInput('');
@@ -23,7 +23,7 @@ const Login = () => {
       setLogInError(false);
       axios
         .post(
-          'http://localhost:3095/api/users/login',
+          '/api/users/login',
           { email, password },
           {
             withCredentials: true,
