@@ -5,7 +5,7 @@ import { Link, Redirect, Switch, Route } from 'react-router-dom';
 import useSWR from 'swr';
 import axios from 'axios';
 import loadable from '@loadable/component';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 
 import fetcher from '@utils/fetcher';
 import { IChannel, IUser } from '@typings/db';
@@ -222,11 +222,7 @@ const Workspace: React.VFC = () => {
         onCloseModal={onCloseModal}
         setShowInviteWorkspaceModal={setShowInviteWorkspaceModal}
       />
-      <InviteChannelModal
-        show={showInviteChannelModal}
-        onCloseModal={onCloseModal}
-        setShowInviteChannelModal={setShowInviteChannelModal}
-      />
+      <ToastContainer position="bottom-center" />
     </div>
   );
 };
