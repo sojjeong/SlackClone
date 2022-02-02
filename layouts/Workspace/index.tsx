@@ -145,7 +145,7 @@ const Workspace: React.VFC = () => {
         <RightMenu>
           <span onClick={onClickUserProfile}>
             <ProfileImg
-              src={gravatar.url(userData?.nickname as string, { s: '28px', d: 'retro' })}
+              src={gravatar.url(userData?.email as string, { s: '28px', d: 'retro' })}
               alt={userData?.nickname}
             />
             {showUserMenu && (
