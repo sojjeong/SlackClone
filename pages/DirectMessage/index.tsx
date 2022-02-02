@@ -70,6 +70,7 @@ const DirectMessage = () => {
           });
           return prevChatData;
         }, false).then(() => {
+          localStorage.setItem(`${workspace}-${id}`, new Date().getTime().toString());
           setChat('');
           if (scrollbarRef.current) {
             if (
@@ -128,6 +129,10 @@ const DirectMessage = () => {
       }, 100);
     }
   }, [chatData]);
+
+  useEffect(() => {
+    localStorage.setItem(`${workspace}-${id}`, new Date().getTime().toString());
+  }, [workspace, id]);
 
   if (!userData || !myData) {
     return null;
