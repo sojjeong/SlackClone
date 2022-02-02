@@ -152,7 +152,7 @@ const Workspace: React.VFC = () => {
               <Menu style={{ right: 0, top: 38 }} show={showUserMenu} onCloseModal={onCloseUserProfile}>
                 <ProfileModal>
                   <img
-                    src={gravatar.url(userData?.nickname as string, { s: '28px', d: 'retro' })}
+                    src={gravatar.url(userData?.email as string, { s: '28px', d: 'retro' })}
                     alt={userData?.nickname}
                   />
                   <div>
