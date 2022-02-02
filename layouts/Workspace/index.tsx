@@ -15,6 +15,8 @@ import Modal from '@components/Modal';
 import CreateChannelModal from '@components/CreateChannelModal';
 import InviteWorkspaceModal from '@components/InviteWorkspaceModal';
 import InviteChannelModal from '@components/InviteChannelModal';
+import DMList from '@components/DMList';
+import ChannelList from '@components/ChannelList';
 
 import gravatar from 'gravatar';
 import { Button, Input, Label } from '@pages/SignUp/styles';
@@ -152,7 +154,7 @@ const Workspace: React.VFC = () => {
         <Workspaces>
           {userData?.Workspaces.map((ws) => {
             return (
-              <Link key={ws.id} to={`/worksapce/${123}/channel/일반`}>
+              <Link key={ws.id} to={`/workspace/${123}/channel/일반`}>
                 <WorkspaceButton>{ws.name.slice(0, 1).toUpperCase()}</WorkspaceButton>
               </Link>
             );
@@ -170,9 +172,8 @@ const Workspace: React.VFC = () => {
                 <button onClick={onLogout}>로그아웃</button>
               </WorkspaceModal>
             </Menu>
-            {channelData?.map((v) => (
-              <div>{v.name}</div>
-            ))}
+            <ChannelList />
+            <DMList />
           </MenuScroll>
         </Channels>
         <Chats>
