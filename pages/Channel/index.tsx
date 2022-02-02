@@ -73,6 +73,8 @@ const Channel = () => {
           });
           return prevChatData;
         }, false).then(() => {
+          // 메시지 보냈을 때 시간 업데이트 (채팅창에 들어와 읽은것이기 때문에 업데이트)
+          localStorage.setItem(`${workspace}-${channel}`, new Date().getTime().toString());
           setChat('');
           scrollbarRef.current?.scrollToBottom();
         });
@@ -134,6 +136,12 @@ const Channel = () => {
       }, 100);
     }
   }, [chatData]);
+
+  // unread message 시점 기록 -> 로컬스토리지
+  useEffect(() => {
+    // 채널 들어갈 때마다 현재 시각이 기록됨
+    localStorage.setItem(`${workspace}-${channel}`, new Date().getTime().toString());
+  }, [workspace, channel]);
 
   if (!myData) {
     return null;
