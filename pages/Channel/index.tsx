@@ -22,6 +22,7 @@ const Channel = () => {
   const { data: userData } = useSWR<IUser>('/api/users', fetcher);
   const { data: channelsData } = useSWR<IChannel[]>(`/api/workspaces/${workspace}/channels`, fetcher);
   const channelData = channelsData?.find((v) => v.name === channel);
+
   const {
     data: chatData,
     mutate: mutateChat,
@@ -39,6 +40,7 @@ const Channel = () => {
       },
     },
   );
+
   const { data: channelMembersData } = useSWR<IUser[]>(
     userData ? `/api/workspaces/${workspace}/channels/${channel}/members` : null,
     fetcher,

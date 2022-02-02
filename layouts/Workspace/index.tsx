@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { Link, Redirect, Switch, Route } from 'react-router-dom';
 
@@ -10,6 +10,7 @@ import { toast } from 'react-toastify';
 import fetcher from '@utils/fetcher';
 import { IChannel, IUser } from '@typings/db';
 import useInput from '@hooks/useInput';
+import useSocket from '@hooks/useSocket';
 import Menu from '@components/Menu';
 import Modal from '@components/Modal';
 import CreateChannelModal from '@components/CreateChannelModal';
@@ -44,6 +45,8 @@ const DirectMessage = loadable(() => import('@pages/DirectMessage'));
 
 // children을 사용하면 Channel 페이지에서 workspace안의 태그들이 children이 됨, 필요없으면 VFC로 타입 선언
 const Workspace: React.VFC = () => {
+  const { workspace } = useParams<{ workspace?: string }>();
+
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false);
   const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
@@ -52,12 +55,25 @@ const Workspace: React.VFC = () => {
   const [showInviteChannelModal, setShowInviteChannelModal] = useState(false);
   const [newWorkspace, onChangeNewWorkspace, setNewWorkspace] = useInput('');
   const [newUrl, onChangeNewUrl, setNewUrl] = useInput('');
-
-  const { workspace } = useParams<{ workspace?: string }>();
+  const [socket, disconnect] = useSocket(workspace);
 
   const { data: userData, error, mutate } = useSWR<IUser | false>('/api/users', fetcher);
   const { data: channelData } = useSWR<IChannel[]>(userData ? `/api/workspaces/${workspace}/channels` : null, fetcher);
-  const { data: memberData } = useSWR<IUser[]>(userData ? `/api/workspaces/${workspace}/members` : null, fetcher);
+  // const { data: memberData } = useSWR<IUser[]>(userData ? `/api/workspaces/${workspace}/members` : null, fetcher);
+
+  useEffect(() => {
+    if (channelData && userData && socket) {
+      console.log(socket);
+      socket.emit('login', { id: userData.id, channels: channelData.map((v) => v.id) });
+    }
+  }, [socket, channelData, userData]);
+
+  // 워크스페이스가 바꼈을 때, disconnect
+  useEffect(() => {
+    return () => {
+      disconnect();
+    };
+  }, [workspace, disconnect]);
 
   const onLogout = useCallback(() => {
     axios.post('/api/users/logout', null, { withCredentials: true }).then(() => {
@@ -154,7 +170,7 @@ const Workspace: React.VFC = () => {
         <Workspaces>
           {userData?.Workspaces.map((ws) => {
             return (
-              <Link key={ws.id} to={`/workspace/${123}/channel/일반`}>
+              <Link key={ws.id} to={`/workspace/${workspace}/channel/일반`}>
                 <WorkspaceButton>{ws.name.slice(0, 1).toUpperCase()}</WorkspaceButton>
               </Link>
             );

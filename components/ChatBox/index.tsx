@@ -77,6 +77,7 @@ const ChatBox: FC<Props> = ({ onSubmitForm, chat, onChangeChat, placeholder, dat
           inputRef={textareaRef}
           allowSuggestionsAboveCursor
         >
+          {/* Mention의 부모는 MentionsInput(styles에 선언) */}
           <Mention
             appendSpaceOnAdd
             trigger="@"

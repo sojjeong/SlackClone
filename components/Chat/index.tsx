@@ -14,11 +14,18 @@ interface Props {
   data: IDM | IChat;
 }
 
+// 컴포넌트 캐싱 : memo / useMemo
 const BACK_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3095' : 'https://sleact.nodebird.com';
 const Chat: FC<Props> = memo(({ data }) => {
   const { workspace } = useParams<{ workspace: string; channel: string }>();
+
+  // DM 보낸 사람에 Sender 라는 옵션이 달려있음, 나인지 아닌지 판단
   const user: IUser = 'Sender' in data ? data.Sender : data.User;
 
+  // 멘션하는 부분에 대한 정규표현식으로 처리 / 줄바꿈 br로 바꿀때 사용할 수도 있음
+  // @[쏘뇽](1)
+  // \d 숫자, +는 1개 이상, ?는 0개나 1개, *은 0개 이상 g는 모두찾기
+  // +? 최대한 조금 찾음?
   const result = useMemo<(string | JSX.Element)[] | JSX.Element>(
     () =>
       data.content.startsWith('uploads\\') || data.content.startsWith('uploads/') ? (
